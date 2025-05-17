@@ -6,19 +6,15 @@
 class Contacts
 {
 	public:
-		std::map<std::string, int> Data;
+		std::map<std::string, std::string> Data;
 		int size;
 	Contacts()
 	{
 		this->size = 0;
 	}
-	Contacts(std::string name, int number)
-	{
-		this->Data[name] = number;
-	}
 	void printContacts();
 	int searchContacts(std::string subString);
-	void addContacts(std::string name, int number);
+	void addContacts(std::string name, std::string number);
 	void deleteContacts(std::string name);
 	void renameContacts(std::string name);
 };
@@ -33,7 +29,7 @@ void Contacts::printContacts()
 	{
 		std::cout << "Contacts:" << std::endl;
 		for (const auto &iterator : this->Data) std::cout << iterator.first << ":\t" << iterator.second << std::endl;
-	}		
+	}
 }
 
 int Contacts::searchContacts(std::string subString)
@@ -59,45 +55,28 @@ int Contacts::searchContacts(std::string subString)
 	else
 	{
 		std::cout << std::endl;
-		return i;
+		return i - 1;
 	}
 }
 
-int isValid(std::string name, std::string number)
+bool isValid(std::string name, std::string number)
 {
-	std::regex Pattern("[0-9.-]");
-	if (std::regex_search(name, Pattern))
+	std::regex invalid("[^a-zA-Z ]");
+	std::regex valid_number("^[0-9]{10}$");
+	if (std::regex_search(name, invalid))
 	{
 		std::cout << "Invalid name." << std::endl;
-		return -1;
+		return false;
 	}
-	else
+	if (!std::regex_match(number, valid_number))
 	{
-		if (number.length() != 10)
-		{
-			std::cout << "Invalid number." << std::endl;
-			return -1;
-		}
-		else
-		{
-			std::regex pattern("[0-9]");
-			if (std::regex_search(number, pattern))
-			{
-				int Number;
-				std::stringstream ss(number);
-				ss >> Number;
-				return Number;
-			}
-			else
-			{
-				std::cout << "Invalid number." << std::endl;
-				return -1;
-			}
-		}
+		std::cout << "Invalid number." << std::endl;
+		return false;
 	}
+	return true;
 }
 
-void Contacts::addContacts(std::string name, int number)
+void Contacts::addContacts(std::string name, std::string number)
 {
 	this->Data[name] = number;
 	std::cout << name << " was added to contacts." << std::endl;
@@ -106,7 +85,6 @@ void Contacts::addContacts(std::string name, int number)
 
 void Contacts::deleteContacts(std::string name)
 {
-
 	int sno;
 	int no = this->searchContacts(name);
 	std::cout << "Enter serial number of the contact to be deleted: ";
@@ -119,11 +97,11 @@ void Contacts::deleteContacts(std::string name)
 	else
 	{
 		int length = 1;
-		for (const auto &iterator : this->Data)
+		for (auto iterator = this->Data.begin(); iterator != this->Data.end(); ++iterator)
 		{
-			if (length == sno)	
+			if (length == sno)
 			{
-				this->Data.erase(iterator.first);
+				this->Data.erase(iterator);
 				break;
 			}
 			length++;
@@ -135,10 +113,9 @@ void Contacts::deleteContacts(std::string name)
 
 void Contacts::renameContacts(std::string name)
 {
-
 	int sno;
 	int no = this->searchContacts(name);
-	std::cout << "Enter serial number of the contact to be renamed: ";	
+	std::cout << "Enter serial number of the contact to be renamed: ";
 	std::cin >> sno;
 	std::getchar();
 	if (sno > no || sno <= 0)
@@ -147,31 +124,32 @@ void Contacts::renameContacts(std::string name)
 	}
 	else
 	{
-		std::string Nname, name;
-		int number, length = 1;
+		std::string Nname, original;
+		std::string number;
+		int length = 1;
 		std::cout << "Enter new name: ";
 		std::getline(std::cin, Nname);
-		for (auto &iterator : this->Data)
+		for (char &c : Nname) c = std::tolower(c);
+		for (auto iterator = this->Data.begin(); iterator != this->Data.end(); ++iterator)
 		{
 			if (length == sno)
 			{
-				number = iterator.second;
-				name = iterator.first;
-				this->Data.erase(name);
+				number = iterator->second;
+				original = iterator->first;
+				this->Data.erase(iterator);
 				break;
 			}
 			length++;
 		}
-		for (char &c : Nname) c = std::tolower(c);
 		this->Data[Nname] = number;
-		std::cout << "Contact renamed from '" << name << "' to '" << Nname << "'." << std::endl;
+		std::cout << "Contact renamed from '" << original << "' to '" << Nname << "'." << std::endl;
 	}
 }
 
 int main(int argc, char *argv[])
 {
 	Contacts C;
-	int choice, Number;
+	int choice;
 	std::string name, number;
 	std::cout << "1-> Add to contacts.\n2-> Rename contact.\n3-> Search contact.\n4-> Delete contact.\n";
 	std::cout << "5-> Display contact list.\n6-> Exit.\n";
@@ -187,13 +165,8 @@ int main(int argc, char *argv[])
 				std::getline(std::cin, name);
 				for (char &c : name) c = std::tolower(c);
 				std::cout << "Enter number: ";
-				std::cin >> number;
-				std::getchar();
-				Number = isValid(name, number);
-				if (Number > 0)
-				{
-					C.addContacts(name, Number);
-				}
+				std::getline(std::cin, number);
+				if (isValid(name, number)) C.addContacts(name, number);
 				break;
 			case 2:
 				if (C.size != 0)
@@ -201,12 +174,9 @@ int main(int argc, char *argv[])
 					std::cout << "Enter name of contact: ";
 					std::getline(std::cin, name);
 					for (char &c : name) c = std::tolower(c);
-					C.renameContacts(name);	
+					C.renameContacts(name);
 				}
-				else
-				{
-					std::cout << "No contacts available." << std::endl;
-				}
+				else std::cout << "No contacts available." << std::endl;
 				break;
 			case 3:
 				if (C.size != 0)
@@ -216,10 +186,7 @@ int main(int argc, char *argv[])
 					for (char &c : name) c = std::tolower(c);
 					C.searchContacts(name);
 				}
-				else
-				{
-					std::cout << "No contacts available." << std::endl;
-				}
+				else std::cout << "No contacts available." << std::endl;
 				break;
 			case 4:
 				if (C.size != 0)
@@ -229,13 +196,10 @@ int main(int argc, char *argv[])
 					for (char &c : name) c = std::tolower(c);
 					C.deleteContacts(name);
 				}
-				else
-				{
-					std::cout << "No contacts available." << std::endl;
-				}
+				else std::cout << "No contacts available." << std::endl;
 				break;
 			case 5:
-				C.printContacts();	
+				C.printContacts();
 				break;
 			case 6:
 				goto exit;
@@ -244,6 +208,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	exit:
-		std::cout << "[+] Program terminated." << std::endl;
-		return 0;
+	std::cout << "[+] Program terminated." << std::endl;
+	return 0;
 }
+
