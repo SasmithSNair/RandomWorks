@@ -1,5 +1,3 @@
-/* Contacts simulation in C++ */
-
 #include <iostream>
 #include <map>
 #include <regex>
@@ -10,7 +8,6 @@ class Contacts
 	public:
 		std::map<std::string, int> Data;
 		int size;
-
 	Contacts()
 	{
 		this->size = 0;
@@ -110,7 +107,7 @@ void Contacts::addContacts(std::string name, int number)
 void Contacts::deleteContacts(std::string name)
 {
 
-	int length = 0, sno;
+	int sno;
 	int no = this->searchContacts(name);
 	std::cout << "Enter serial number of the contact to be deleted: ";
 	std::cin >> sno;
@@ -121,14 +118,15 @@ void Contacts::deleteContacts(std::string name)
 	}
 	else
 	{
+		int length = 1;
 		for (const auto &iterator : this->Data)
 		{
-			length++;
 			if (length == sno)	
 			{
 				this->Data.erase(iterator.first);
 				break;
 			}
+			length++;
 		}
 		this->size--;
 		std::cout << "Contact deleted." << std::endl;
@@ -138,7 +136,7 @@ void Contacts::deleteContacts(std::string name)
 void Contacts::renameContacts(std::string name)
 {
 
-	int length = 0, sno;
+	int sno;
 	int no = this->searchContacts(name);
 	std::cout << "Enter serial number of the contact to be renamed: ";	
 	std::cin >> sno;
@@ -149,20 +147,22 @@ void Contacts::renameContacts(std::string name)
 	}
 	else
 	{
-		std::string Nname;
-		int number;
+		std::string Nname, name;
+		int number, length = 1;
 		std::cout << "Enter new name: ";
 		std::getline(std::cin, Nname);
 		for (auto &iterator : this->Data)
 		{
-			length++;
 			if (length == sno)
 			{
 				number = iterator.second;
-				this->Data.erase(iterator.first);
+				name = iterator.first;
+				this->Data.erase(name);
 				break;
 			}
+			length++;
 		}
+		for (char &c : Nname) c = std::tolower(c);
 		this->Data[Nname] = number;
 		std::cout << "Contact renamed from '" << name << "' to '" << Nname << "'." << std::endl;
 	}
@@ -174,8 +174,7 @@ int main(int argc, char *argv[])
 	int choice, Number;
 	std::string name, number;
 	std::cout << "1-> Add to contacts.\n2-> Rename contact.\n3-> Search contact.\n4-> Delete contact.\n";
-	std::cout << "5-> Display contact list.\n6-> Exit\n";
-	
+	std::cout << "5-> Display contact list.\n6-> Exit.\n";
 	while (1)
 	{
 		std::cout << ">>> ";
